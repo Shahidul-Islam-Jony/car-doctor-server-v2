@@ -7,7 +7,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 //middleware
-app.use(cors());
+app.use(cors({
+    origin:[
+        'http://localhost:5173'
+    ],
+    credentials:true,
+}));
 app.use(express.json());
 
 
@@ -35,7 +40,18 @@ async function run() {
             const user = req.body;
             const token = jwt.sign({user},process.env.ACCESS_TOKEN_SECRET,{expiresIn:'1h'})
 
-            res.send({token});
+            res.cookie('token',token,{
+                httpOnly: true,
+                secure:true,
+                sameSite:'none'
+            })
+            .send({success:true});
+        })
+
+        app.post('/logout',async(req,res)=>{
+            const user = req.body;
+            console.log('logging out',user);
+            res.clearCookie('token',{maxAge:0}).send({success: true})   // user logout korle cookies theke token ti remove korte
         })
 
       
