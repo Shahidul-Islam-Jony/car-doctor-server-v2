@@ -30,17 +30,28 @@ const client = new MongoClient(uri, {
 });
 
 //own created middlewares
-//middleware toire korar basic structure
-// const logger = (req, res, next) => {    //middleware toire korar basic structure
-//     console.log('log: info', req.method, req.url);
-//     next();
-// }
+
+const logger = (req, res, next) => {
+    console.log('log: info', req.method, req.url);
+    next();
+}
 
 // verify token by middleware
 const verifyToken = (req, res, next) => {
     const token = req?.cookies?.token;
     console.log('token in the middleware', token);
-    next();
+
+    // no token available
+    if (!token) {
+        return res.status(401).send({ message: 'Unauthorized access' })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'Unauthorized access' })
+        }
+        req.user = decoded;
+        next();
+    })
 }
 
 
@@ -53,9 +64,9 @@ async function run() {
         const bookingCollection = client.db('carDoctor').collection('bookings');
 
         // Auth related api
-        app.post('/jwt', /*logger,*/ verifyToken, async (req, res) => {     //ekadhik middleware , diye use kora jai.
+        app.post('/jwt', logger, async (req, res) => {     //ekadhik middleware , diye use kora jai.
             const user = req.body;
-            const token = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign( user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
 
             res.cookie('token', token, {
                 httpOnly: true,
@@ -95,8 +106,12 @@ async function run() {
 
         // Bookings
 
-        app.get('/bookings', /*logger,*/ async (req, res) => {
-            console.log('Cookies', req.cookies);
+        app.get('/bookings', logger, verifyToken, async (req, res) => {
+            // console.log('Cookies', req.cookies);
+            console.log('token owner info', req.user);
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: 'forbiddeen access' })
+            }
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }    // database er email abong client er email match korabe 
