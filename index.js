@@ -64,7 +64,7 @@ async function run() {
         const bookingCollection = client.db('carDoctor').collection('bookings');
 
         // Auth related api
-        app.post('/jwt', logger, async (req, res) => {     //ekadhik middleware , diye use kora jai.
+        app.post('/jwt', async (req, res) => {
             const user = req.body;
             const token = jwt.sign( user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
 
@@ -106,7 +106,7 @@ async function run() {
 
         // Bookings
 
-        app.get('/bookings', logger, verifyToken, async (req, res) => {
+        app.get('/bookings', verifyToken, async (req, res) => {
             // console.log('Cookies', req.cookies);
             console.log('token owner info', req.user);
             if (req.user.email !== req.query.email) {
