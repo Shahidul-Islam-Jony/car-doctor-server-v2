@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(cors({
     origin: [
-        // 'http://localhost:5173'
+        'http://localhost:5173',
         'https://cars-doctor-17a15.web.app',
         'https://cars-doctor-17a15.firebaseapp.com'
 
@@ -88,9 +88,19 @@ async function run() {
 
         // Services related api
         app.get('/services', async (req, res) => {
-            const cursor = serviceCollection.find();    //for find all
-            const result = await cursor.toArray();
-            // const result = await serviceCollection.find().toArray(); // uporer dui line ekline ao kora jai
+            const filter = req.query;
+            console.log(filter);
+
+            const query = {};
+            const options = {
+                sort: {
+                    price: filter.sort === 'asc'? 1 : -1
+                }
+            }
+
+            // const cursor = serviceCollection.find();    //for find all
+            // const result = await cursor.toArray();
+            const result = await serviceCollection.find(query,options).toArray(); // uporer dui line ekline ao kora jai
             res.send(result);
         })
 
